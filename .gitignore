@@ -1,0 +1,25 @@
+# Poetry
+.venv/
+poetry.lock
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Build directories
+build/
+dist/
+*.egg-info/
+
+# IDE and editor files
+.idea/
+.vscode/
+
+# Environment variables files
+*.env
+
+# Python testing cache
+.mypy_cache/
+.tox/
+.nox/
+.coverage
