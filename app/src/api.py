@@ -33,7 +33,7 @@ async def read_root():
 
 @app.get("/models")
 async def read_models():
-    models_path = "serving\\models"
+    models_path = "\\models"
     models = os.listdir(models_path)
     return {"models": models}
 
