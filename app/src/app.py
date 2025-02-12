@@ -26,7 +26,7 @@ if choice == "Train":
     if st.button("Comenzar el entrenamiento"):
         with st.spinner("Entrenando..."):
             
-            response = requests.post("/train", 
+            response = requests.post("https://cpercivati-tpintegradorfinal-cdia.streamlit.app/train", 
                                      json={
                                          "model_name": model_name, 
                                          "episodes": episodes, 
@@ -45,11 +45,11 @@ if choice == "Train":
 elif choice == "Show":
     st.subheader("Mostrar resultados")
     #Leer los modelos de la carpeta models:
-    res = requests.get("/models")
+    res = requests.get("https://cpercivati-tpintegradorfinal-cdia.streamlit.app/models")
     model = st.selectbox("Seleccione el modelo", res.json()["models"])
     if st.button("Cargar"):
         
-        response = requests.get("/output?model_name="+model, stream=True)
+        response = requests.get("https://cpercivati-tpintegradorfinal-cdia.streamlit.app/output?model_name="+model, stream=True)
         if response.status_code == 200:
             # Convertir el contenido CSV en un DataFrame
             csv_content = response.text
