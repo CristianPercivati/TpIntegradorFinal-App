@@ -33,9 +33,16 @@ async def read_root():
 
 @app.get("/models")
 async def read_models():
-    models_path = "\\models"
+    models_path = "serving\\models"
     models = os.listdir(models_path)
     return {"models": models}
+
+@app.get("/get-data")
+async def read_models():
+    data_path = "serving\\app\\src\\data"
+    #Listar solo los que terminen en csv
+    data = [file for file in os.listdir(data_path) if file.endswith(".csv")]
+    return {"data": data}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)

@@ -23,3 +23,7 @@ dist/
 .tox/
 .nox/
 .coverage
+
+#Data:
+outputs/
+models/

@@ -1,23 +1,25 @@
 import streamlit as st
 import requests
+import random
 import pandas as pd
 from io import StringIO
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import matplotlib.pyplot as plt
 from utils import ubicaciones_coords, agregar_ruido
 import plotly.express as px
+import plotly.graph_objects as go
 
+st.set_page_config(page_title="TP Integrador - BATransf", page_icon="🚖", layout="wide")
 st.title("Sistema de Optimización de Tarifas - BATransf")
 
 menu = ["Train", "Show"]
 
 st.sidebar.title("Menú")
-st.sidebar.write("Train: Carga los datos y entrena el modelo")
-st.sidebar.write("Show: Muestra la salida de un modelo")
 choice = st.sidebar.selectbox("Menu", menu)
 
 if choice == "Train":
-    uploaded_file = st.file_uploader("Elija el archivo CSV", type=["csv"])
+    res = requests.get("http://localhost:8000/get-data")
+    data = st.selectbox("Seleccione el dataset", res.json()["data"])
     st.subheader("Entrenar el modelo")
     model_name = st.text_input("Ingrese el nombre del modelo","Modelo 1")
     col1,col2,col3,col4,col5=st.columns(5)
@@ -26,7 +28,7 @@ if choice == "Train":
     if st.button("Comenzar el entrenamiento"):
         with st.spinner("Entrenando..."):
             
-            response = requests.post("https://cpercivati-tpintegradorfinal-cdia.streamlit.app/train", 
+            response = requests.post("http://localhost:8000/train", 
                                      json={
                                          "model_name": model_name, 
                                          "episodes": episodes, 
@@ -45,11 +47,11 @@ if choice == "Train":
 elif choice == "Show":
     st.subheader("Mostrar resultados")
     #Leer los modelos de la carpeta models:
-    res = requests.get("https://cpercivati-tpintegradorfinal-cdia.streamlit.app/models")
+    res = requests.get("http://localhost:8000/models")
     model = st.selectbox("Seleccione el modelo", res.json()["models"])
     if st.button("Cargar"):
         
-        response = requests.get("https://cpercivati-tpintegradorfinal-cdia.streamlit.app/output?model_name="+model, stream=True)
+        response = requests.get("http://localhost:8000/output?model_name="+model, stream=True)
         if response.status_code == 200:
             # Convertir el contenido CSV en un DataFrame
             csv_content = response.text
@@ -61,6 +63,8 @@ elif choice == "Show":
             with tabs[0]:
                 st.write("Head del CSV:")
                 st.dataframe(df_2025.head())
+                st.write("Tail del CSV:")
+                st.dataframe(df_2025.tail())
 
             with tabs[1]:
                 df_series = df.copy()
@@ -114,7 +118,6 @@ elif choice == "Show":
             
                 # Convertir la columna 'Fecha' a datetime
                 df_2025['Fecha'] = pd.to_datetime(df_2025['Fecha'], format='%d/%m/%Y')
-
                 # Crear el mapa
                 fig = px.scatter_mapbox(
                     df_2025,
@@ -127,16 +130,23 @@ elif choice == "Show":
                     animation_frame="Fecha",  # Slider para la evolución día a día
                     zoom=10,
                     height=600,
-                    title="Viajes en Buenos Aires (2025)"
+                    title="Viajes en Buenos Aires (2025)",
                 )
-
                 # Configurar el estilo del mapa
                 fig.update_layout(
                     mapbox_style="carto-darkmatter",
                     mapbox_center={"lat": -34.6037, "lon": -58.3816},  # Centrar en Buenos Aires
-                    margin={"r": 0, "t": 40, "l": 0, "b": 0}
+                    margin={"r": 0, "t": 40, "l": 0, "b": 0},
                 )
-
+                # Si no hay viajes tomados, por plotly tengo que inventar algún punto true
+                if not df_2025[df_2025["Fecha"] == df_2025["Fecha"].iloc[0]]["Aceptado"].any():
+                    fig.add_trace(go.Scattermapbox(
+                        lat=[None], lon=[None],  # No queremos puntos reales, solo leyenda
+                        marker=dict(color="orange"),
+                        name="True",
+                        showlegend=True
+                    ))
+                    
                 # Mostrar el mapa
                 st.plotly_chart(fig)
         else:
